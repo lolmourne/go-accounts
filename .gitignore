@@ -9,3 +9,6 @@ vendor
 # log
 debug.log
 error.log
+
+config.json
+config.yaml

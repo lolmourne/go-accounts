@@ -1,9 +1,10 @@
 package model
 
 type Config struct {
-	DB    PostgreCfg `json:"postgresql"`
-	Redis RedisCfg   `json:"redis"`
-	JWT   JWTCfg     `json:"jwt"`
+	DB     PostgreCfg   `json:"postgresql"`
+	Redis  RedisCfg     `json:"redis"`
+	JWT    JWTCfg       `json:"jwt"`
+	S3Cred S3Credential `json:"s3"`
 }
 
 type PostgreCfg struct {
@@ -21,4 +22,10 @@ type RedisCfg struct {
 
 type JWTCfg struct {
 	SignKey string `json:"signKey"`
+}
+
+type S3Credential struct {
+	AccessID   string `json:"access_id"`
+	Secret     string `json:"secret"`
+	BucketName string `json:"bucket_name"`
 }

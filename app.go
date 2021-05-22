@@ -23,6 +23,7 @@ import (
 	"github.com/lolmourne/go-accounts/model"
 	"github.com/lolmourne/go-accounts/resource/acc"
 	"github.com/lolmourne/go-accounts/resource/monitoring"
+	"github.com/lolmourne/go-accounts/resource/s3"
 	"github.com/lolmourne/go-accounts/usecase/userauth"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -49,6 +50,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	_ = s3.NewS3Resource(cfg)
 
 	dbConStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", cfg.DB.Address, cfg.DB.Port, cfg.DB.User, cfg.DB.Password, cfg.DB.DBName)
 
