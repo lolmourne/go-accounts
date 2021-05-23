@@ -12,5 +12,10 @@
     },
     "jwt": {
         "signKey": "signedK3y"
+    },
+    "s3": {
+        "access_id": "AKIA3QHZ6VMCRQCRKEW4",
+        "secret": "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",
+        "bucket_name": "skilvul-course"
     }
 }

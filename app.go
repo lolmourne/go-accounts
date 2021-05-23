@@ -25,12 +25,15 @@ import (
 	"github.com/lolmourne/go-accounts/resource/monitoring"
 	"github.com/lolmourne/go-accounts/resource/s3"
 	"github.com/lolmourne/go-accounts/usecase/userauth"
+
+	"github.com/lolmourne/go-accounts/usecase/profile"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var db *sqlx.DB
 var dbResource acc.DBItf
 var userAuthUsecase userauth.UsecaseItf
+var userProfielUsecase profile.IUsecase
 var addr = flag.String("listen-address", ":7171", "The address to listen on for HTTP requests.")
 var prometheusMonitoring monitoring.IMonitoring
 
@@ -51,7 +54,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	_ = s3.NewS3Resource(cfg)
+	s3Res := s3.NewS3Resource(cfg)
+	userProfielUsecase = profile.NewUsecase(s3Res)
 
 	dbConStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable", cfg.DB.Address, cfg.DB.Port, cfg.DB.User, cfg.DB.Password, cfg.DB.DBName)
 
@@ -90,6 +94,7 @@ func main() {
 	r.PUT("/profile", validateSession(updateProfile))
 	r.PUT("/password", validateSession(changePassword))
 	r.GET("/user/info", validateSession(getUserInfo))
+	r.POST("/upload", validateSession(uploadFile))
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
@@ -148,6 +153,45 @@ func getUserInfo(c *gin.Context) {
 		Err:  "",
 		Data: user,
 	})
+}
+
+func uploadFile(c *gin.Context) {
+	file, _, err := c.Request.FormFile("file")
+	if err != nil {
+		log.Println(err)
+		c.JSON(500, StandardAPIResponse{
+			Err: "Internal Server Error",
+		})
+		return
+	}
+
+	fileb, err := ioutil.ReadAll(file)
+	if err != nil {
+		log.Println(err)
+		c.JSON(500, StandardAPIResponse{
+			Err: "Internal Server Error",
+		})
+		return
+	}
+
+	if err != nil {
+		c.JSON(500, StandardAPIResponse{
+			Err: "Internal Server Error",
+		})
+		return
+	}
+
+	filePath, err := userProfielUsecase.UploadFile(fileb)
+	if err != nil {
+		c.JSON(500, StandardAPIResponse{
+			Err: err.Error(),
+		})
+		return
+	}
+	c.JSON(200, StandardAPIResponse{
+		Message: filePath,
+	})
+
 }
 
 func register(c *gin.Context) {
@@ -281,9 +325,11 @@ func updateProfile(c *gin.Context) {
 		return
 	}
 
+	newToken, err := userAuthUsecase.GenerateJWT(userID, profilepic)
+
 	c.JSON(201, StandardAPIResponse{
 		Err:     "null",
-		Message: "Success update profile picture",
+		Message: newToken,
 	})
 
 }

@@ -13,6 +13,7 @@ type UsecaseItf interface {
 	Register(username, password, confirmPassword string) error
 	Login(username, password string) (string, error)
 	ValidateSession(accessToken string) (int64, error)
+	GenerateJWT(userID int64, profilePic string) (string, error)
 }
 
 func NewUsecase(dbRsc acc.DBItf, signingKey string) UsecaseItf {

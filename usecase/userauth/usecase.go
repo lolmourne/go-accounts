@@ -74,13 +74,30 @@ func (u *Usecase) ValidateSession(accessToken string) (int64, error) {
 		}
 		return u.signingKey, nil
 	})
-
 	if err != nil {
 		return 0, errors.New("Invalid Token")
 	}
 
 	userID := int64(claims["user_id"].(float64))
 	return userID, nil
+}
+
+func (u *Usecase) GenerateJWT(userID int64, profilePic string) (string, error) {
+	if profilePic == "" {
+		profilePic = "https://i.imgur.com/cINvch3.png"
+	}
+	token := jwt.New(jwt.GetSigningMethod("HS256"))
+	tokenClaim := jwt.MapClaims{}
+	tokenClaim["user_id"] = userID
+	tokenClaim["profile_pic"] = profilePic
+	token.Claims = tokenClaim
+
+	tokenString, err := token.SignedString(u.signingKey)
+	if err != nil {
+		log.Println(err)
+		return "", errors.New("Internal Server Error")
+	}
+	return tokenString, nil
 }
 
 const letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"

@@ -7,13 +7,12 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/s3manager"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/lolmourne/go-accounts/model"
-	uuid "github.com/satori/go.uuid"
 )
 
 type IS3 interface {
-	Put(data []byte) error
+	Put(data []byte, filename string, mime string) error
 }
 
 type S3Resource struct {
@@ -32,19 +31,24 @@ func NewS3Resource(cfg model.Config) IS3 {
 		},
 	}))
 
-	sess := session.New(awsCfg)
+	sess, err := session.NewSession(awsCfg)
+	if err != nil {
+		log.Fatal("Cannot connect AWS S3 ", err)
+	}
 
 	return &S3Resource{
-		uploadClient: s3manager.NewDownloader(sess),
+		uploadClient: s3manager.NewUploader(sess),
 		bucketName:   cfg.S3Cred.BucketName,
 	}
 }
 
-func (s3 *S3Resource) Put(data []byte) error {
+func (s3 *S3Resource) Put(data []byte, filename string, mime string) error {
+
 	upInput := &s3manager.UploadInput{
-		Bucket: aws.String(s3.bucketName),
-		Key:    aws.String(GenerateUUIDv4()),
-		Body:   bytes.NewReader(data),
+		Bucket:      aws.String(s3.bucketName),
+		Key:         aws.String(filename),
+		Body:        bytes.NewReader(data),
+		ContentType: aws.String(mime),
 	}
 
 	_, err := s3.uploadClient.Upload(upInput)
@@ -54,8 +58,4 @@ func (s3 *S3Resource) Put(data []byte) error {
 	}
 
 	return nil
-}
-
-func GenerateUUIDv4() string {
-	return uuid.Must(uuid.NewV4()).String()
 }
