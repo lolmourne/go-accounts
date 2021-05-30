@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package rpc;
+
+// option go_package = "google.golang.org/grpc/examples/helloworld/helloworld";
+option go_package = "github.com/lolmourne/go-accounts/rpc";
+
+// The greeting service definition.
+service Accounts {
+    rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoResponse) {}
+}
+ 
+
+message GetUserInfoRequest{
+    string accessToken = 1;
+}
+
+message GetUserInfoResponse{
+    int64 userID = 1;
+    string userName = 2;
+    int64 timeStamp = 3;
+    string profilePicture = 4;
+}

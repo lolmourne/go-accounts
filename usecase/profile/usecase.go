@@ -13,15 +13,15 @@ import (
 const AllowedExtensions = ".jpeg,.jpg"
 
 func (u *Usecase) UploadFile(file []byte) (string, error) {
-	mime, extension := mimetype.Detect(file)
-	if strings.Index(AllowedExtensions, extension) == -1 {
-		return "", errors.New("File Type is not allowed, file type: " + extension)
+	mime := mimetype.Detect(file)
+	if strings.Index(AllowedExtensions, mime.Extension()) == -1 {
+		return "", errors.New("File Type is not allowed, file type: " + mime.Extension())
 	}
 	log.Println(mime)
 	uid := uuid.NewV4()
 
-	fileName := fmt.Sprintf("image/profile/%s.%s", uid.String(), extension)
-	err := u.res.Put(file, fileName, mime)
+	fileName := fmt.Sprintf("image/profile/%s.%s", uid.String(), mime.Extension())
+	err := u.res.Put(file, fileName, mime.Extension())
 	if err != nil {
 		log.Print(err)
 		return "", err

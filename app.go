@@ -27,6 +27,7 @@ import (
 	"github.com/lolmourne/go-accounts/usecase/userauth"
 
 	"github.com/lolmourne/go-accounts/usecase/profile"
+	"github.com/nsqio/go-nsq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -34,8 +35,9 @@ var db *sqlx.DB
 var dbResource acc.DBItf
 var userAuthUsecase userauth.UsecaseItf
 var userProfielUsecase profile.IUsecase
-var addr = flag.String("listen-address", ":7171", "The address to listen on for HTTP requests.")
+var addr = flag.String("listen-address", ":7272", "The address to listen on for HTTP requests.")
 var prometheusMonitoring monitoring.IMonitoring
+var nsqProducer *nsq.Producer
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -53,6 +55,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	config := nsq.NewConfig()
+	prod, err := nsq.NewProducer("34.101.255.14:4150", config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	nsqProducer = prod
 
 	s3Res := s3.NewS3Resource(cfg)
 	userProfielUsecase = profile.NewUsecase(s3Res)
@@ -219,11 +228,30 @@ func login(c *gin.Context) {
 	username := c.Request.FormValue("username")
 	password := c.Request.FormValue("password")
 
+	type LoginCounter struct {
+		Endpoint   string  `json:"endpoint"`
+		Statuscode int     `json:"status_code"`
+		ErrorMsg   string  `json:"error_msg"`
+		Latency    float64 `json:"latency"`
+	}
+
 	user, err := userAuthUsecase.Login(username, password)
 	if err != nil {
 		processTime := time.Since(startTime).Milliseconds()
+		msg := LoginCounter{
+			Endpoint:   "/login",
+			Statuscode: 400,
+			ErrorMsg:   err.Error(),
+			Latency:    float64(processTime),
+		}
+		msgJson, err := json.Marshal(msg)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+		nsqProducer.Publish("monitoring_count_login", msgJson)
 
-		prometheusMonitoring.CountLogin("/login", 400, err.Error(), float64(processTime))
+		//prometheusMonitoring.CountLogin("/login", 400, err.Error(), float64(processTime))
 		c.JSON(400, StandardAPIResponse{
 			Err:     err.Error(),
 			Message: "Failed",
@@ -232,7 +260,21 @@ func login(c *gin.Context) {
 		return
 	}
 	processTime := time.Since(startTime).Milliseconds()
-	prometheusMonitoring.CountLogin("/login", 200, "nil", float64(processTime))
+
+	msg := LoginCounter{
+		Endpoint:   "/login",
+		Statuscode: 200,
+		ErrorMsg:   "",
+		Latency:    float64(processTime),
+	}
+	msgJson, err := json.Marshal(msg)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+	nsqProducer.Publish("monitoring_count_login", msgJson)
+
+	//prometheusMonitoring.CountLogin("/login", 200, "nil", float64(processTime))
 	c.JSON(200, StandardAPIResponse{
 		Data: user,
 	})
