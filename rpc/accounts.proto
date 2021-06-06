@@ -8,6 +8,7 @@ option go_package = "github.com/lolmourne/go-accounts/rpc";
 // The greeting service definition.
 service Accounts {
     rpc GetUserInfo (GetUserInfoRequest) returns (GetUserInfoResponse) {}
+    rpc GetUserByID (GetUserByIDRequest) returns (GetUserByIDResponse) {}
 }
  
 
@@ -16,6 +17,17 @@ message GetUserInfoRequest{
 }
 
 message GetUserInfoResponse{
+    int64 userID = 1;
+    string userName = 2;
+    int64 timeStamp = 3;
+    string profilePicture = 4;
+}
+
+message GetUserByIDRequest{
+    int64 userID = 1;
+}
+
+message GetUserByIDResponse{
     int64 userID = 1;
     string userName = 2;
     int64 timeStamp = 3;

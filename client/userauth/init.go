@@ -1,12 +1,20 @@
 package userauth
 
 import (
+	"log"
 	"time"
+
+	pb "github.com/lolmourne/go-accounts/rpc"
+	"google.golang.org/grpc"
 )
 
 type AuthClient struct {
 	host    string
 	timeout time.Duration
+}
+
+type AuthClientGRPC struct {
+	grpcCli pb.AccountsClient
 }
 
 type User struct {
@@ -25,5 +33,18 @@ func NewClient(host string, timeout time.Duration) ClientItf {
 	return &AuthClient{
 		host:    host,
 		timeout: timeout,
+	}
+}
+
+func NewGrpcClient(address string) ClientItf {
+	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	grpcCli := pb.NewAccountsClient(conn)
+	if err != nil {
+		log.Fatal("Cannot init grpc")
+		return nil
+	}
+	defer conn.Close()
+	return &AuthClientGRPC{
+		grpcCli: grpcCli,
 	}
 }
