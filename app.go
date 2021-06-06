@@ -26,6 +26,7 @@ import (
 	"github.com/lolmourne/go-accounts/resource/s3"
 	"github.com/lolmourne/go-accounts/usecase/userauth"
 
+	"github.com/lolmourne/go-accounts/server"
 	"github.com/lolmourne/go-accounts/usecase/profile"
 	"github.com/nsqio/go-nsq"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -106,6 +107,11 @@ func main() {
 	r.POST("/upload", validateSession(uploadFile))
 
 	http.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		server.InitGrpcServer(userAuthUsecase, dbRsc)
+	}()
+
 	go func() {
 		log.Fatal(http.ListenAndServe(*addr, nil))
 	}()

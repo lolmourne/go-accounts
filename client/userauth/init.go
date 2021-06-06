@@ -38,12 +38,12 @@ func NewClient(host string, timeout time.Duration) ClientItf {
 
 func NewGrpcClient(address string) ClientItf {
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
-	grpcCli := pb.NewAccountsClient(conn)
 	if err != nil {
 		log.Fatal("Cannot init grpc")
 		return nil
 	}
 	defer conn.Close()
+	grpcCli := pb.NewAccountsClient(conn)
 	return &AuthClientGRPC{
 		grpcCli: grpcCli,
 	}
