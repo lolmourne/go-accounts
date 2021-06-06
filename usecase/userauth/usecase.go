@@ -33,6 +33,7 @@ func (u *Usecase) Register(username, password, confirmPassword string) error {
 func (u *Usecase) Login(username, password string) (string, error) {
 	user, err := u.dbRsc.GetUserByUserName(username)
 	if err != nil {
+		log.Println(err)
 		return "", errors.New("user not found or password is incorrect")
 	}
 
@@ -42,6 +43,7 @@ func (u *Usecase) Login(username, password string) (string, error) {
 	hashedPassword := fmt.Sprintf("%x", h.Sum(nil))
 
 	if user.Password != hashedPassword {
+		log.Println("WRONG PASSWORD")
 		return "", errors.New("user not found or password is incorrect")
 	}
 

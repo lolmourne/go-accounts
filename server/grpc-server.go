@@ -62,7 +62,7 @@ func InitGrpcServer(userAuthUc userauth.UsecaseItf, dbRsc acc.DBItf) {
 		log.Fatalf("failed to listen: %v", err)
 	}
 	s := grpc.NewServer()
-	pb.RegisterAccountsServer(s, &GrpcServer{})
+	pb.RegisterAccountsServer(s, NewGrpcServer(userAuthUc, dbRsc))
 	log.Printf("server listening at %v", lis.Addr())
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)

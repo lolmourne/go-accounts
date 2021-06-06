@@ -58,7 +58,7 @@ func main() {
 	}
 
 	config := nsq.NewConfig()
-	prod, err := nsq.NewProducer("34.101.255.14:4150", config)
+	prod, err := nsq.NewProducer("localhost:4150", config)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -259,7 +259,7 @@ func login(c *gin.Context) {
 
 		//prometheusMonitoring.CountLogin("/login", 400, err.Error(), float64(processTime))
 		c.JSON(400, StandardAPIResponse{
-			Err:     err.Error(),
+			Err:     "FAIL",
 			Message: "Failed",
 		})
 
