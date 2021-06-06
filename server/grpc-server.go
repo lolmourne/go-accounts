@@ -19,6 +19,7 @@ type GrpcServer struct {
 }
 
 func (gs *GrpcServer) GetUserInfo(ctx context.Context, req *pb.GetUserInfoRequest) (*pb.GetUserInfoResponse, error) {
+	log.Println("access token", req.AccessToken)
 	accessToken := req.AccessToken
 
 	if len(accessToken) < 1 {

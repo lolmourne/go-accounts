@@ -42,7 +42,6 @@ func NewGrpcClient(address string) ClientItf {
 		log.Fatal("Cannot init grpc")
 		return nil
 	}
-	defer conn.Close()
 	grpcCli := pb.NewAccountsClient(conn)
 	return &AuthClientGRPC{
 		grpcCli: grpcCli,
